@@ -31,8 +31,8 @@ inline int Simulate(int argc, const char** argv) {
   auto set_param = [](Param* param) {
     // Create an artificial bounds for the simulation space
     param->bound_space_ = true;
-    param->min_bound_ = -300;
-    param->max_bound_ = 300;
+    param->min_bound_ = -600;
+    param->max_bound_ = 600;
   };  // todo can be moved to config file?
 
   Simulation simulation(argc, argv, set_param);
@@ -61,7 +61,7 @@ inline int Simulate(int argc, const char** argv) {
   ModelInitializer::CreateCells(positions, construct);
 
   // Define the substances that cells may secrete
-  ModelInitializer::DefineSubstance(kViral, "SARS-CoV-2", 0.4, 0, 25);
+  ModelInitializer::DefineSubstance(kViral, "SARS-CoV-2", 0.4, 0, 50);
 
   // Run simulation for N timesteps
   simulation.GetScheduler()->Simulate(3000);

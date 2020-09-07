@@ -16,6 +16,7 @@
 #define DIFFUSION_BIOLOGY_MODULES_H_
 
 #include "biodynamo.h"
+#include <iostream>
 
 namespace bdm {
 
@@ -29,16 +30,15 @@ struct Movement : public BaseBiologyModule {
   Movement() : BaseBiologyModule(gAllEventIds) {}
 
   void Run(SimObject* so) override {
-
     if (auto* cell = dynamic_cast<Cell*>(so)) {
       Double3 step;
 
       if (cell->GetDiameter() > 27) {
-          step = {0.1, 0, 0};
+        step = {0.1, 0, 0};
       } else {
-          step = {0.02, -0.05, 0};
+        step = {0.02, -0.05, 0};
       }
-
+      cell->SetTractorForce(step);
       cell->UpdatePosition(step);
     }
   }
@@ -53,8 +53,20 @@ struct ViralShedding : public BaseBiologyModule {
     auto* sim = Simulation::GetActive();
     auto* rm = sim->GetResourceManager();
     static auto* kDg = rm->GetDiffusionGrid(kViral);
-    double amount = 4;
-    kDg->IncreaseConcentrationBy(so->GetPosition(), amount);
+    double amount = 40;
+
+
+    if (auto* cell = dynamic_cast<Cell*>(so)) {
+      auto position = so->GetPosition();
+      auto vector = cell->GetTractorForce();
+      auto displacement = vector * 400;
+      auto forwardPoint = position + displacement;
+
+      kDg->IncreaseConcentrationBy(forwardPoint, amount);
+      // todo increase concentration in the cone towards the direction
+//      std::cout << "Force: " << cell->GetTractorForce() << std::endl;
+    }
+
   }
 };
 
