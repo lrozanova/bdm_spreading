@@ -21,7 +21,7 @@
 namespace bdm {
 
 // List the extracellular substances
-enum Substances { kViral };
+enum Substances { kViral, kDroplets };
 
 // Define displacement behavior:
 struct Movement : public BaseBiologyModule {
@@ -32,7 +32,6 @@ struct Movement : public BaseBiologyModule {
   void Run(SimObject* so) override {
     if (auto* cell = dynamic_cast<Cell*>(so)) {
       Double3 step;
-
       if (cell->GetDiameter() > 27) {
         step = {0.1, 0, 0};
       } else {
@@ -53,8 +52,10 @@ struct ViralShedding : public BaseBiologyModule {
     auto* sim = Simulation::GetActive();
     auto* rm = sim->GetResourceManager();
     static auto* kDg = rm->GetDiffusionGrid(kViral);
-    double amount = 40;
+    static auto* kDgDrop = rm->GetDiffusionGrid(kDroplets);
 
+    double amount = 40;
+    double amountDroplets = 20;
 
     if (auto* cell = dynamic_cast<Cell*>(so)) {
       auto position = so->GetPosition();
@@ -63,6 +64,7 @@ struct ViralShedding : public BaseBiologyModule {
       auto forwardPoint = position + displacement;
 
       kDg->IncreaseConcentrationBy(forwardPoint, amount);
+      kDgDrop->IncreaseConcentrationBy(forwardPoint, amountDroplets);
       // todo increase concentration in the cone towards the direction
 //      std::cout << "Force: " << cell->GetTractorForce() << std::endl;
     }

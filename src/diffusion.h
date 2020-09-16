@@ -62,6 +62,7 @@ inline int Simulate(int argc, const char** argv) {
 
   // Define the substances that cells may secrete
   ModelInitializer::DefineSubstance(kViral, "SARS-CoV-2", 0.4, 0, 50);
+  ModelInitializer::DefineSubstance(kDroplets, "SARS-CoV-2-droplets", 0.5, 0.2, 50);
 
   // Run simulation for N timesteps
   simulation.GetScheduler()->Simulate(3000);

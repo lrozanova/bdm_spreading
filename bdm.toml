@@ -11,4 +11,8 @@ export_interval = 10
 
     [[visualize_diffusion]]
     name = "SARS-CoV-2"
-    gradient = true
+    gradient = false
+
+    [[visualize_diffusion]]
+    name = "SARS-CoV-2-droplets"
+    gradient = false
