@@ -29,16 +29,45 @@ struct Movement : public BaseBiologyModule {
 
   Movement() : BaseBiologyModule(gAllEventIds) {}
 
+  static std::mt19937& mt() {
+    // initialize once per thread
+    thread_local static std::random_device srd;
+    thread_local static std::mt19937 smt(srd());
+    return smt;
+  }
+
+  std::normal_distribution<double> distr = std::normal_distribution<double>(0, 0.1);
+
   void Run(SimObject* so) override {
     if (auto* cell = dynamic_cast<Cell*>(so)) {
-      Double3 step;
-      if (cell->GetDiameter() > 27) {
-        step = {0.1, 0, 0};
+      double mass = cell->GetMass();
+      Double3 step = {0, 0, -0.5 * mass};
+      double rx = this->distr(mt());
+      double ry = this->distr(mt());
+      double rz = this->distr(mt());
+
+      Double3 gravity_step;
+      Double3 current = cell->GetTractorForce();
+
+      if (cell->GetDiameter() < 1) {
+        Double3 g = {0, -0.05, 0};
+        gravity_step = current + g;
       } else {
-        step = {0.02, -0.05, 0};
+        gravity_step = {0, 0, 0};
       }
-      cell->SetTractorForce(step);
-      cell->UpdatePosition(step);
+
+      Double3 random_step = {rx, ry, rz};
+      Double3 empty = {0, 0, 0};
+      Double3 displacement = cell->GetPosition()[1] > -10 ? step + random_step + gravity_step : empty;
+
+//      Double3 position = cell->GetPosition();
+//
+//      if (position[1] < 30) {
+//        displacement = {0, 0, 0};
+//      }
+
+      cell->SetTractorForce(gravity_step);
+      cell->UpdatePosition(displacement);
     }
   }
 };
