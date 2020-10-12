@@ -1,22 +1,9 @@
-// -----------------------------------------------------------------------------
-//
-// Copyright (C) The BioDynaMo Project.
-// All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-//
-// See the LICENSE file distributed with this work for details.
-// See the NOTICE file distributed with this work for additional information
-// regarding copyright ownership.
-//
-// -----------------------------------------------------------------------------
-
 #ifndef DIFFUSION_BIOLOGY_MODULES_H_
 #define DIFFUSION_BIOLOGY_MODULES_H_
 
-#include "biodynamo.h"
 #include <iostream>
+#include "biodynamo.h"
+#include "turbulence.h"
 
 namespace bdm {
 
@@ -29,22 +16,14 @@ struct Movement : public BaseBiologyModule {
 
   Movement() : BaseBiologyModule(gAllEventIds) {}
 
-  static std::mt19937& mt() {
-    // initialize once per thread
-    thread_local static std::random_device srd;
-    thread_local static std::mt19937 smt(srd());
-    return smt;
-  }
-
-  std::normal_distribution<double> distr = std::normal_distribution<double>(0, 0.1);
-
   void Run(SimObject* so) override {
     if (auto* cell = dynamic_cast<Cell*>(so)) {
+
+      auto* sim = Simulation::GetActive();
+      double time = static_cast<double>(sim->GetScheduler()->GetSimulatedSteps());
+
       double mass = cell->GetMass();
       Double3 step = {0, 0, -0.5 * mass};
-      double rx = this->distr(mt());
-      double ry = this->distr(mt());
-      double rz = this->distr(mt());
 
       Double3 gravity_step;
       Double3 current = cell->GetTractorForce();
@@ -56,15 +35,20 @@ struct Movement : public BaseBiologyModule {
         gravity_step = {0, 0, 0};
       }
 
-      Double3 random_step = {rx, ry, rz};
-      Double3 empty = {0, 0, 0};
-      Double3 displacement = cell->GetPosition()[1] > -10 ? step + random_step + gravity_step : empty;
+      Double3 turbulence_step = turbulence_force
+          cell->GetPosition(), cell->GetMass(), time);
 
-//      Double3 position = cell->GetPosition();
-//
-//      if (position[1] < 30) {
-//        displacement = {0, 0, 0};
-//      }
+      Double3 empty = {0, 0, 0};
+
+      Double3 displacement = cell->GetPosition()[1] > -10
+                                 ? step + random_step + gravity_step + turbulence_step
+                                 : empty;
+
+      //      Double3 position = cell->GetPosition();
+      //
+      //      if (position[1] < 30) {
+      //        displacement = {0, 0, 0};
+      //      }
 
       cell->SetTractorForce(gravity_step);
       cell->UpdatePosition(displacement);
@@ -95,9 +79,8 @@ struct ViralShedding : public BaseBiologyModule {
       kDg->IncreaseConcentrationBy(forwardPoint, amount);
       kDgDrop->IncreaseConcentrationBy(forwardPoint, amountDroplets);
       // todo increase concentration in the cone towards the direction
-//      std::cout << "Force: " << cell->GetTractorForce() << std::endl;
+      //      std::cout << "Force: " << cell->GetTractorForce() << std::endl;
     }
-
   }
 };
 
